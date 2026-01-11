@@ -1,5 +1,5 @@
 """
-BPE Tokenizer in the style of GPT-4.
+BPE (Byte Pair Encoding) Tokenizer in the style of GPT-4.
 
 Two implementations are available:
 1) HuggingFace Tokenizer that can do both training and inference but is really confusing
@@ -160,7 +160,10 @@ import rustbpe
 import tiktoken
 
 class RustBPETokenizer:
-    """Light wrapper around tiktoken (for efficient inference) but train with rustbpe"""
+    """
+    Conversor from text to numbers (tokenizer) for subword-level (BPE):
+    unhappiness -> un, happines
+    Light wrapper around tiktoken (for efficient inference) but train with rustbpe"""
 
     def __init__(self, enc, bos_token):
         self.enc = enc
@@ -168,10 +171,12 @@ class RustBPETokenizer:
 
     @classmethod
     def train_from_iterator(cls, text_iterator, vocab_size):
-        # 1) train using rustbpe
+        # 1) train using rustbpe, Rust based tokenizer faster than Python
         tokenizer = rustbpe.Tokenizer()
+
         # the special tokens are inserted later in __init__, we don't train them here
         vocab_size_no_special = vocab_size - len(SPECIAL_TOKENS)
+
         assert vocab_size_no_special >= 256, f"vocab_size_no_special must be at least 256, got {vocab_size_no_special}"
         tokenizer.train_from_iterator(text_iterator, vocab_size_no_special, pattern=SPLIT_PATTERN)
         # 2) construct the associated tiktoken encoding for inference
